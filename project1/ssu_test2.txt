@@ -1,4 +1,0 @@
-Linux System Programming!
-Unix System Programming!
-Linux Mania
-Unix Mania
