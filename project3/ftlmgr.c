@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
 		memset(pagebuf,(char)0xFF, PAGE_SIZE); //일단 0xFF로 다 채워준다.
 		memcpy(pagebuf,argv[4],strlen(argv[4])); //sector 부분에 덮어써준다.
 		memcpy(pagebuf+SECTOR_SIZE,argv[5],strlen(argv[5])); //spare 부분에 덮어써준다.
+		printf("%s\n", pagebuf);
 		dd_write(atoi(argv[3]), pagebuf); //페이지 단위로 써주는 함수 호출
 
 		fclose(flashfp);
