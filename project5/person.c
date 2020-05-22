@@ -124,6 +124,14 @@ void insert(FILE *fp, const Person *p)
 	}
 	else{
 	}
+
+	readPage(fp, Pagebuf, 0);
+	memcpy(pagebuf, &page_amount, sizeof(int));
+	memcpy(pagebuf+4, &record_amount, sizeof(int));
+	memcpy(pagebuf+8, &deleted_page_head, sizeof(int));
+	memcpy(pagebuf+12, &deleted_record_head, sizeof(int));
+	writePage(fp, pagebuf, 0);
+	
 }
 
 void delete(FILE *fp, const char *sn)
