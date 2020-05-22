@@ -65,27 +65,21 @@ void ftl_read(int lsn, char *sectorbuf)
 	int ppn;
 	int i = 0;
 
-	if ((flashfp = fopen("flashfile", "r")) == NULL){
-		fprintf(stderr, "open error for %s\n", "flashfile");
-		exit(1);
-	}
+	//sectorbuf 초기화
+	memset(sectorbuf,(char)0xFF, SECTOR_SIZE);
+
 	//address mapping table에서 주어진 lsn에 매핑되어 있는 ppn 값을 구하고,
 	//이것이 가리키는 flash memory의 페이지 읽는다.
 	//ppn 매핑 안되어있는 lpn인 경우
 	if((ppn = address_mapping_table[lsn].ppn) == -1){
-		memset(sectorbuf,(char)0xFF, SECTOR_SIZE);
 		printf("mapping된 page가 존재하지 않습니다.\n");
 	}
 	//ppn 매핑 되어있는 lpn인 경우
 	else{
 		dd_read(ppn, pagebuf); //페이지 읽어서
-		memset(sectorbuf, 0, SECTOR_SIZE); //sector버퍼 널로 초기화해주고
-		while(pagebuf[i] != (char)0xFF){ //sectorbuf에 데이터만 넣어준다.
-			sectorbuf[i] = pagebuf[i];
-			i++;
-		}
+		memset(sectorbuf, 0xFF, SECTOR_SIZE); //sector버퍼 0xFF로 초기화해주고
+		memcpy(sectorbuf, pagebuf, SECTOR_SIZE); //sector부분을 떼어 sector buf에 넣어준다.
 	}
-	fclose(flashfp);
 	return;
 }
 
@@ -103,11 +97,6 @@ void ftl_write(int lsn, char *sectorbuf)
 	int j = 0;
 
 
-	if ((flashfp = fopen("flashfile", "r+")) == NULL){
-		fprintf(stderr, "open error for %s\n", "flashfile");
-		exit(1);
-	}
-	
 	//ppn 정하기 위한 과정
 	for(i = 0; i < BLOCKS_PER_DEVICE; i++){
 		if(i == freeBlock_pbn) //freeBlock_pbn의 경우 건너뛰고
@@ -200,7 +189,6 @@ void ftl_write(int lsn, char *sectorbuf)
 		dd_write(ppn, pagebuf);
 	}
 
-	fclose(flashfp);
 	return;
 }
 

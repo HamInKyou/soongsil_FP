@@ -16,6 +16,7 @@ FILE *flashfp;
 
 int main(void)	{
 	char sectorbuf[SECTOR_SIZE]; //섹터 data가 임시로 저장될 버퍼
+	char tmp_sectorbuf[SECTOR_SIZE];
 	char c;
 	int lsn;
 	int i = 0;
@@ -25,11 +26,15 @@ int main(void)	{
 		fprintf(stderr, "creat error for %s\n", "flashfile");
 		exit(1);
 	}
+	fclose(flashfp);
 	//모든 블록의 각 바이트 0xff로 초기화
 	for(i = 0; i < BLOCKS_PER_DEVICE; i++)
 		dd_erase(i);
-	fclose(flashfp);
 	
+	if ((flashfp = fopen("flashfile", "r+")) == NULL) {
+		fprintf(stderr, "creat error for %s\n", "flashfile");
+		exit(1);
+	}
 	//address mapping table 생성과 초기화
 	ftl_open();
 
@@ -40,8 +45,11 @@ int main(void)	{
 		switch (c) {
 			case 'w' :
 				printf("lsn과 data를 입력해주세요 > ");
-				scanf("%d %s", &lsn, sectorbuf);
+				scanf("%d %s", &lsn, tmp_sectorbuf);
 				getchar();
+
+				memset(sectorbuf, (char)0xFF, SECTOR_SIZE);
+				memcpy(sectorbuf, tmp_sectorbuf, strlen(tmp_sectorbuf));
 				
 				ftl_write(lsn, sectorbuf);
 				break;
@@ -50,10 +58,10 @@ int main(void)	{
 				scanf("%d", &lsn);
 				getchar(); //표준입력 버퍼 비우기(개행)
 				ftl_read(lsn, sectorbuf);
-				if(sectorbuf[0] != (char)0xFF){
-					i = 0;
-					printf("%s\n", sectorbuf);
+				for(i=0 ; i < SECTOR_SIZE; i++){
+					printf("%c", sectorbuf[i]);
 				}
+				printf("\n");
 				break;
 			case 'p' :
 				ftl_print();
@@ -66,4 +74,5 @@ int main(void)	{
 		}
 	}
 
+	fclose(flashfp);
 }
