@@ -90,6 +90,8 @@ void insert(FILE *fp, const Person *p)
 	int record_amount = 0;
 	int deleted_page_head = -1;
 	int deleted_record_head = -1;
+	int tmp_deleted_page_head;
+	int tmp_deleted_record_head;
 	int can_insert_index;
 
 	readPage(fp, pagebuf, pagenum);
@@ -106,8 +108,6 @@ void insert(FILE *fp, const Person *p)
 	memcpy(&deleted_page_head, pagebuf+8, sizeof(int));
 	memcpy(&deleted_record_head, pagebuf+12, sizeof(int));
 	
-	printf("before: %d %d %d %d\n", page_amount, record_amount, deleted_page_head, deleted_record_head);
-
 	pack(recordbuf, p);
 
 	if(deleted_page_head == -1){
@@ -125,6 +125,18 @@ void insert(FILE *fp, const Person *p)
 		}
 	}
 	else{
+		readPage(fp, pagebuf, deleted_page_head);
+		memcpy(recordbuf, pagebuf + (deleted_record_head * RECORD_SIZE), RECORD_SIZE);
+		memcpy(&tmp_deleted_page_head, recordbuf+1, sizeof(int));
+		memcpy(&tmp_deleted_record_head, recordbuf+5, sizeof(int));
+
+		pack(recordbuf, p);
+		memcpy(pagebuf + (deleted_record_head * RECORD_SIZE), recordbuf, RECORD_SIZE);
+		writePage(fp, pagebuf, deleted_page_head);
+
+		deleted_page_head = tmp_deleted_page_head;
+		deleted_record_head = tmp_deleted_record_head;
+
 	}
 
 	readPage(fp, pagebuf, 0);
@@ -133,8 +145,7 @@ void insert(FILE *fp, const Person *p)
 	memcpy(pagebuf+8, &deleted_page_head, sizeof(int));
 	memcpy(pagebuf+12, &deleted_record_head, sizeof(int));
 	writePage(fp, pagebuf, 0);
-	
-	printf("after: %d %d %d %d\n", page_amount, record_amount, deleted_page_head, deleted_record_head);
+
 }
 
 void delete(FILE *fp, const char *sn)
@@ -163,8 +174,6 @@ void delete(FILE *fp, const char *sn)
 	memcpy(&record_amount, pagebuf+4, sizeof(int));
 	memcpy(&deleted_page_head, pagebuf+8, sizeof(int));
 	memcpy(&deleted_record_head, pagebuf+12, sizeof(int));
-	
-	printf("before: %d %d %d %d\n", page_amount, record_amount, deleted_page_head, deleted_record_head);
 	
 	for(i = 1; i < page_amount; i++){
 		readPage(fp, pagebuf, i);
@@ -224,22 +233,6 @@ void delete(FILE *fp, const char *sn)
 	else{
 		printf("sorry, I can't find it\n");
 	}
-	
-
-	readPage(fp, pagebuf, 0);
-	memcpy(&page_amount, pagebuf, sizeof(int));
-	memcpy(&record_amount, pagebuf+4, sizeof(int));
-	memcpy(&deleted_page_head, pagebuf+8, sizeof(int));
-	memcpy(&deleted_record_head, pagebuf+12, sizeof(int));
-	
-	printf("after: %d %d %d %d\n", page_amount, record_amount, deleted_page_head, deleted_record_head);
-
-	readPage(fp, pagebuf, i);
-	memcpy(recordbuf, pagebuf+(j*RECORD_SIZE), RECORD_SIZE);
-	memcpy(&deleted_page_head, recordbuf+1, sizeof(int));
-	memcpy(&deleted_record_head, recordbuf+5, sizeof(int));
-
-	printf("%d %d\n", deleted_page_head, deleted_record_head);
 
 }
 
